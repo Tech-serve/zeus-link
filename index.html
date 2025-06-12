@@ -36,10 +36,10 @@
     <input type="text" id="brand" placeholder="например Rosmann">
   </label>
   <label>Item (название товара)
-    <input type="text" id="item" placeholder="например zestaw kosmetyków">
+    <input type="text" id="item" placeholder="например zestaw kosmetyków или {item}">
   </label>
   <label>Image URL (sub22, ссылка на изображение)
-    <input type="text" id="imageUrl" placeholder="https://.../prize.png">
+    <input type="text" id="imageUrl" placeholder="https://.../prize.png или {image}">
   </label>
 
   <div class="row">
@@ -63,7 +63,7 @@
       if (pixel && !/^[0-9]+$/.test(pixel)) { e.textContent = 'Pixel ID — только цифры или пусто'; return false; }
       if (!brand) { e.textContent = 'Brand — пустое поле'; return false; }
       if (!item)  { e.textContent = 'Item — пустое поле'; return false; }
-      if (!url || !/^https?:\/\//.test(url)) { e.textContent = 'Image URL — должно начинаться с http/https'; return false; }
+      if (!url || !/^https?:\/\//.test(url) && url !== '{image}') { e.textContent = 'Image URL — должно начинаться с http/https или быть {image}'; return false; }
       return true;
     }
 
@@ -76,6 +76,10 @@
       const item   = tidy($('item').value);
       const url    = tidy($('imageUrl').value);
       if (!validate(pid, offer, src, pixel, brand, item, url)) return;
+
+      const srcUpper = src.toUpperCase();
+      const itemPart = item === '{item}' ? item : encodeURIComponent(item);
+      const urlPart = url === '{image}' ? url : encodeURIComponent(url);
 
       const base = 'https://trafficjet.trk2afse.com/click?';
       const parts = [
@@ -91,10 +95,10 @@
         'sub24={click.var:city}',
         'sub27={click.var:email}',
         'sub28={click.var:phone}',
-        `sub22=${encodeURIComponent(url)}`,
-        `sub23=${encodeURIComponent(item)}`,
+        `sub22=${urlPart}`,
+        `sub23=${itemPart}`,
         `sub21=${encodeURIComponent(brand)}`,
-        'sub19={click.var:var13}'
+        `sub19=${srcUpper}`
       ].join('&');
 
       $('output').value = base + parts;
