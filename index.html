@@ -59,7 +59,7 @@
       if (!/^[a-z0-9][a-z0-9-]*$/.test(src)) { e.textContent = 'Source ID — строчные буквы/цифры/«-»'; return false; }
       if (!brand) { e.textContent = 'Brand — пустое поле'; return false; }
       if (!item)  { e.textContent = 'Item — пустое поле'; return false; }
-      if (!url || !/^https?:\/\//.test(url) && url !== '{image}') { e.textContent = 'Image URL — должно начинаться с http/https или быть {image}'; return false; }
+      if (!url || (!/^https?:\/\//.test(url) && url !== '{image}')) { e.textContent = 'Image URL — должно начинаться с http/https или быть {image}'; return false; }
       return true;
     }
 
@@ -73,8 +73,8 @@
       if (!validate(pid, offer, src, brand, item, url)) return;
 
       const srcUpper = src.toUpperCase();
-      const itemPart = item === '{item}' ? item : encodeURIComponent(item);
-      const urlPart = url === '{image}' ? url : encodeURIComponent(url);
+      const itemPart = item === '{item}' ? '{click.var:item}' : encodeURIComponent(item);
+      const urlPart = url === '{image}' ? '{click.var:image}' : encodeURIComponent(url);
 
       const base = 'https://trafficjet.trk2afse.com/click?';
       const parts = [
@@ -89,7 +89,7 @@
         'sub26={click.var:zipcode}',
         'sub24={click.var:city}',
         'sub27={click.var:email}',
-        'sub28={click.var:phone}',
+        'sub28={click.var:phone}`,
         `sub22=${urlPart}`,
         `sub23=${itemPart}`,
         `sub21=${encodeURIComponent(brand)}`,
