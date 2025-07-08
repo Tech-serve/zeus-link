@@ -20,23 +20,23 @@
 <body>
   <h2>TrafficJet Link ZEUS Generator</h2>
 
-  <label>PID (идентификатор кампании)
+  <label>PID (идентификатор байера)
     <input type="text" id="pid" placeholder="например 6">
   </label>
   <label>Offer ID (идентификатор оффера)
     <input type="text" id="offerId" placeholder="например 34">
   </label>
-  <label>Source ID (sub3, строчные буквы/цифры/«-»)
+  <label>Кастомный саб (sub3, строчные буквы/цифры/«-»)
     <input type="text" id="sourceId" placeholder="например b77">
   </label>
   <label>Brand (название бренда)
     <input type="text" id="brand" placeholder="например Rosmann">
   </label>
-  <label>Item (название товара) или {item}
-    <input type="text" id="item" placeholder="например zestaw kosmetyków или {item}">
+  <label>Item (название товара, оставить пустым — будет {click.var:item})
+    <input type="text" id="item" placeholder="например zestaw kosmetyków">
   </label>
-  <label>Image URL (sub22, ссылка на изображение заканчивается на .png или .jpg) или {image} 
-    <input type="text" id="imageUrl" placeholder="https://.../prize.png или {image}">
+  <label>Image URL (sub22, .png/.jpg; оставить пустым — будет {click.var:image})
+    <input type="text" id="imageUrl" placeholder="https://.../prize.png">
   </label>
 
   <div class="row">
@@ -52,29 +52,28 @@
     const $ = id => document.getElementById(id);
     const tidy = s => s.replace(/\s+/g, ' ').trim();
 
-    function validate(pid, offer, src, brand, item, url) {
+    function validate(pid, offer, src, brand, url) {
       const e = $('error'); e.textContent = '';
-      if (!/^[0-9]+$/.test(pid)) { e.textContent = 'PID — только цифры'; return false; }
+      if (!/^[0-9]+$/.test(pid))  { e.textContent = 'PID — только цифры'; return false; }
       if (!/^[0-9]+$/.test(offer)) { e.textContent = 'Offer ID — только цифры'; return false; }
       if (!/^[a-z0-9][a-z0-9-]*$/.test(src)) { e.textContent = 'Source ID — строчные буквы/цифры/«-»'; return false; }
       if (!brand) { e.textContent = 'Brand — пустое поле'; return false; }
-      if (!item)  { e.textContent = 'Item — пустое поле'; return false; }
-      if (!url || !/^https?:\/\//.test(url) && url !== '{image}') { e.textContent = 'Image URL — должно начинаться с http/https или быть {image}'; return false; }
+      if (url && !/^https?:\/\//.test(url)) { e.textContent = 'Image URL должно начинаться с http/https или быть пустым'; return false; }
       return true;
     }
 
     function generate() {
-      const pid    = tidy($('pid').value);
-      const offer  = tidy($('offerId').value);
-      const src    = tidy($('sourceId').value);
-      const brand  = tidy($('brand').value);
-      const item   = tidy($('item').value);
-      const url    = tidy($('imageUrl').value);
-      if (!validate(pid, offer, src, brand, item, url)) return;
+      const pid   = tidy($('pid').value);
+      const offer = tidy($('offerId').value);
+      const src   = tidy($('sourceId').value);
+      const brand = tidy($('brand').value);
+      const item  = tidy($('item').value);
+      const url   = tidy($('imageUrl').value);
+      if (!validate(pid, offer, src, brand, url)) return;
 
       const srcUpper = src.toUpperCase();
-      const itemPart = item === '{item}' ? item : encodeURIComponent(item);
-      const urlPart = url === '{image}' ? url : encodeURIComponent(url);
+      const itemPart = item ? encodeURIComponent(item) : '{click.var:item}';
+      const urlPart  = url  ? encodeURIComponent(url)  : '{click.var:image}';
 
       const base = 'https://trafficjet.trk2afse.com/click?';
       const parts = [
@@ -101,7 +100,8 @@
 
     function copyLink() {
       const o = $('output'); if (!o.value) return;
-      o.select(); document.execCommand('copy'); alert('Ссылка скопирована!');
+      o.select(); document.execCommand('copy');
+      alert('Ссылка скопирована!');
     }
 
     function resetAll() {
