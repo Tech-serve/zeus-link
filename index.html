@@ -15,6 +15,7 @@
     .reset { background: #f44336; color: #fff; }
     textarea { width: 100%; min-height: 140px; margin-top: 20px; resize: vertical; padding: 10px; font-family: monospace; font-size: 13px; border: 1px dashed #888; border-radius: 4px; background: #f5f5f5; word-break: break-all; }
     .error { margin-top: 12px; color: #d32f2f; font-weight: 600; }
+    #preview { max-width: 100%; display: none; margin-top: 20px; border: 1px solid #ccc; border-radius: 4px; }
   </style>
 </head>
 <body>
@@ -33,11 +34,18 @@
     <input type="text" id="brand" placeholder="например Rosmann">
   </label>
   <label>Item (название товара, оставить пустым — будет {click.var:item})
-    <input type="text" id="item" placeholder="например zestaw kosmetyków">
+    <input type="text" id="item" placeholder="например zestaw косметyków">
   </label>
   <label>Image URL (sub22, .png/.jpg; оставить пустым — будет {click.var:image})
     <input type="text" id="imageUrl" placeholder="https://.../prize.png">
   </label>
+
+  <!-- Превью картинки: динамическая ссылка и сам рисунок -->
+  <div id="previewContainer">
+    <a id="previewLink" href="#" target="_blank">
+      <img id="preview" alt="Превью изображения">
+    </a>
+  </div>
 
   <div class="row">
     <button class="gen" onclick="generate()">Сгенерировать</button>
@@ -51,6 +59,19 @@
   <script>
     const $ = id => document.getElementById(id);
     const tidy = s => s.replace(/\s+/g, ' ').trim();
+
+    // Динамическое обновление превью при вводе URL
+    $('imageUrl').addEventListener('input', () => {
+      const url = tidy($('imageUrl').value);
+      if (/^https?:\/\//.test(url)) {
+        $('preview').src = url;
+        $('previewLink').href = url;
+        $('preview').style.display = 'block';
+      } else {
+        $('preview').style.display = 'none';
+        $('previewLink').href = '#';
+      }
+    });
 
     function validate(pid, offer, src, brand, url) {
       const e = $('error'); e.textContent = '';
@@ -72,8 +93,8 @@
       if (!validate(pid, offer, src, brand, url)) return;
 
       const srcUpper = src.toUpperCase();
-      const itemPart = item ? encodeURIComponent(item) : '{click.var:item}';
-      const urlPart  = url  ? encodeURIComponent(url)  : '{click.var:image}';
+      const itemPart = item  ? encodeURIComponent(item)  : '{click.var:item}';
+      const urlPart  = url   ? encodeURIComponent(url)   : '{click.var:image}';
 
       const base = 'https://trafficjet.trk2afse.com/click?';
       const parts = [
@@ -99,8 +120,10 @@
     }
 
     function copyLink() {
-      const o = $('output'); if (!o.value) return;
-      o.select(); document.execCommand('copy');
+      const o = $('output');
+      if (!o.value) return;
+      o.select();
+      document.execCommand('copy');
       alert('Ссылка скопирована!');
     }
 
@@ -108,6 +131,8 @@
       ['pid','offerId','sourceId','brand','item','imageUrl'].forEach(id => $(id).value = '');
       $('output').value = '';
       $('error').textContent = '';
+      $('preview').style.display = 'none';
+      $('previewLink').href = '#';
     }
   </script>
 </body>
