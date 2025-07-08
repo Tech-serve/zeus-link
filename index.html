@@ -1,97 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <title>TrafficJet Link Generator</title>
   <style>
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      max-width: 720px;
-      margin: 40px auto;
-      padding: 24px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      background: #fafafa;
-    }
-    h2 {
-      text-align: center;
-      margin-top: 0;
-    }
-    label {
-      display: block;
-      margin-top: 14px;
-      font-weight: 600;
-    }
-    input {
-      width: 100%;
-      padding: 8px 10px;
-      margin-top: 4px;
-      border: 1px solid #bbb;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-    .row {
-      display: flex;
-      gap: 12px;
-      margin-top: 22px;
-    }
-    button {
-      flex: 1;
-      padding: 10px;
-      font-size: 15px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
+    body { font-family: Arial, Helvetica, sans-serif; max-width: 720px; margin: 40px auto; padding: 24px; border: 1px solid #ccc; border-radius: 10px; background: #fafafa; }
+    h2 { text-align: center; margin-top: 0; }
+    label { display: block; margin-top: 14px; font-weight: 600; }
+    input { width: 100%; padding: 8px 10px; margin-top: 4px; border: 1px solid #bbb; border-radius: 4px; font-size: 14px; }
+    .row { display: flex; gap: 12px; margin-top: 22px; }
+    button { flex: 1; padding: 10px; font-size: 15px; border: none; border-radius: 4px; cursor: pointer; }
     .gen { background: #007acc; color: #fff; }
     .copy { background: #4caf50; color: #fff; }
     .reset { background: #f44336; color: #fff; }
-    textarea {
-      width: 100%;
-      min-height: 140px;
-      margin-top: 20px;
-      resize: vertical;
-      padding: 10px;
-      font-family: monospace;
-      font-size: 13px;
-      border: 1px dashed #888;
-      border-radius: 4px;
-      background: #f5f5f5;
-      word-break: break-all;
-    }
-    .error {
-      margin-top: 12px;
-      color: #d32f2f;
-      font-weight: 600;
-    }
+    textarea { width: 100%; min-height: 140px; margin-top: 20px; resize: vertical; padding: 10px; font-family: monospace; font-size: 13px; border: 1px dashed #888; border-radius: 4px; background: #f5f5f5; word-break: break-all; }
+    .error { margin-top: 12px; color: #d32f2f; font-weight: 600; }
   </style>
 </head>
 <body>
-  <h2>TrafficJet Link Generator</h2>
+  <h2>TrafficJet Link ZEUS Generator</h2>
 
   <label>PID (идентификатор кампании)
-    <input type="text" id="pid" placeholder="например 11 или 18">
+    <input type="text" id="pid" placeholder="например 6">
   </label>
   <label>Offer ID (идентификатор оффера)
-    <input type="text" id="offerId" placeholder="например 121">
+    <input type="text" id="offerId" placeholder="например 34">
   </label>
-  <label>Source ID (ID браузера, строчные буквы/цифры/«-»)
-    <input type="text" id="sourceId" placeholder="например b93 или b99-tnf">
+  <label>Source ID (sub3, строчные буквы/цифры/«-»)
+    <input type="text" id="sourceId" placeholder="например b77">
   </label>
-  <label>Pixel ID (sub2, опционально, если не указан — PIXELFB)
-    <input type="text" id="pixelId" placeholder="числовой ID пикселя FB">
+  <label>Pixel ID (sub2, опционально — если не указан, будет {click.var:fbpixel})
+    <input type="text" id="pixelId" placeholder="например 123456789">
   </label>
-  <label>GEO Prefix (код страны, напр. +39 или оставить пустым)
-    <input type="text" id="geoPrefix" placeholder="например +39">
+  <label>Brand (название бренда)
+    <input type="text" id="brand" placeholder="например Rosmann">
   </label>
-  <label>Item (название товара) (sub23)
-    <input type="text" id="item" placeholder="например Set di cosmetici premium">
+  <label>Item (название товара)
+    <input type="text" id="item" placeholder="например zestaw kosmetyków или {item}">
   </label>
-  <label>Brand (название бренда) (sub21)
-      <input type="text" id="brand" placeholder="например Douglas">
-    </label>
-  <label>Image URL (ссылка на изображение)</label>
-    <input type="text" id="imageUrl" placeholder="https://.../image.jpg">
+  <label>Image URL (sub22, ссылка на изображение)
+    <input type="text" id="imageUrl" placeholder="https://.../prize.png или {image}">
+  </label>
 
   <div class="row">
     <button class="gen" onclick="generate()">Сгенерировать</button>
@@ -106,72 +55,62 @@
     const $ = id => document.getElementById(id);
     const tidy = s => s.replace(/\s+/g, ' ').trim();
 
-    function validate(pid, offer, src, geo, brand, item, pixel, url) {
-      const e = $('error');
-      e.textContent = '';
-      if (!/^[0-9]+$/.test(pid)) { e.textContent = 'PID — цифры'; return false; }
-      if (!/^[0-9]+$/.test(offer)) { e.textContent = 'Offer ID — цифры'; return false; }
+    function validate(pid, offer, src, pixel, brand, item, url) {
+      const e = $('error'); e.textContent = '';
+      if (!/^[0-9]+$/.test(pid)) { e.textContent = 'PID — только цифры'; return false; }
+      if (!/^[0-9]+$/.test(offer)) { e.textContent = 'Offer ID — только цифры'; return false; }
       if (!/^[a-z0-9][a-z0-9-]*$/.test(src)) { e.textContent = 'Source ID — строчные буквы/цифры/«-»'; return false; }
-      if (geo && !/^\+\d{1,4}$/.test(geo)) { e.textContent = 'GEO Prefix — «+» и 1-4 цифры или пусто'; return false; }
-      if (pixel && !/^[0-9]+$/.test(pixel)) { e.textContent = 'Pixel ID — только цифры'; return false; }
-      if (!brand) { e.textContent = 'Brand пустой'; return false; }
-      if (!item) { e.textContent = 'Item пустой'; return false; }
-      if (url && !/^https?:\/\//.test(url)) { e.textContent = 'Image URL должен начинаться с http/https'; return false; }
+      if (pixel && !/^[0-9]+$/.test(pixel)) { e.textContent = 'Pixel ID — только цифры или пусто'; return false; }
+      if (!brand) { e.textContent = 'Brand — пустое поле'; return false; }
+      if (!item)  { e.textContent = 'Item — пустое поле'; return false; }
+      if (!url || !/^https?:\/\//.test(url) && url !== '{image}') { e.textContent = 'Image URL — должно начинаться с http/https или быть {image}'; return false; }
       return true;
-    }
-
-    function sub19From(src) {
-      const m = src.match(/^[a-z]+[0-9]+/);
-      return (m ? m[0] : src).toUpperCase();
-    }
-
-    function build(pid, offer, src, sub19, geo, brand, item, url, pixel) {
-      const params = [
-        `offer_id=${offer}`,
-        'sub1={subid}',
-        `sub2=${pixel || 'PIXELFB'}`,
-        `sub3=${src}`,
-        'sub30={sub_id_11}',
-        'sub29={sub_id_12}',
-        'sub25={sub_id_13}',
-        'sub26={sub_id_15}',
-        'sub24={sub_id_16}',
-        'sub27={sub_id_19}',
-        `sub28=${geo || ''}{sub_id_21}`,
-        url ? `sub22=${url}` : null,
-        `sub23=${item}`,
-        `sub21=${brand}`,
-        `sub19=${sub19}`
-      ].filter(Boolean).join('&');
-      return `https://trafficjet.trk2afse.com/click?pid=${pid}&` + params;
     }
 
     function generate() {
       const pid    = tidy($('pid').value);
       const offer  = tidy($('offerId').value);
-      const srcLC  = tidy($('sourceId').value.toLowerCase());
+      const src    = tidy($('sourceId').value);
       const pixel  = tidy($('pixelId').value);
-      const geo    = tidy($('geoPrefix').value);
       const brand  = tidy($('brand').value);
       const item   = tidy($('item').value);
       const url    = tidy($('imageUrl').value);
+      if (!validate(pid, offer, src, pixel, brand, item, url)) return;
 
-      if (!validate(pid, offer, srcLC, geo, brand, item, pixel, url)) return;
+      const srcUpper = src.toUpperCase();
+      const itemPart = item === '{item}' ? item : encodeURIComponent(item);
+      const urlPart = url === '{image}' ? url : encodeURIComponent(url);
 
-      const sub19 = sub19From(srcLC);
-      $('output').value = build(pid, offer, srcLC, sub19, geo, brand, item, url, pixel);
+      const base = 'https://trafficjet.trk2afse.com/click?';
+      const parts = [
+        `pid=${pid}`,
+        `offer_id=${offer}`,
+        'sub1={click.id}',
+        `sub2=${pixel || '{click.var:fbpixel}'}`,
+        `sub3=${src}`,
+        'sub30={click.var:firstname}',
+        'sub29={click.var:lastname}',
+        'sub25={click.var:address}',
+        'sub26={click.var:zipcode}',
+        'sub24={click.var:city}',
+        'sub27={click.var:email}',
+        'sub28={click.var:phone}',
+        `sub22=${urlPart}`,
+        `sub23=${itemPart}`,
+        `sub21=${encodeURIComponent(brand)}`,
+        `sub19=${srcUpper}`
+      ].join('&');
+
+      $('output').value = base + parts;
     }
 
     function copyLink() {
-      const o = $('output');
-      if (!o.value) return;
-      o.select();
-      document.execCommand('copy');
-      alert('Скопировано!');
+      const o = $('output'); if (!o.value) return;
+      o.select(); document.execCommand('copy'); alert('Ссылка скопирована!');
     }
 
     function resetAll() {
-      document.querySelectorAll('input').forEach(i => i.value = '');
+      ['pid','offerId','sourceId','pixelId','brand','item','imageUrl'].forEach(id => $(id).value = '');
       $('output').value = '';
       $('error').textContent = '';
     }
